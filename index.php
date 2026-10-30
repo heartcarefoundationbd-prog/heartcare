@@ -40,6 +40,20 @@ switch ($route) {
         ]);
         break;
 
+    case 'our-impact':
+        $isBn = lang() === 'bn';
+        render('our-impact', [
+            'pageTitle' => $isBn
+                ? 'আমাদের অর্জন ও প্রভাব — ' . t('site_name')
+                : 'Our Impact — ' . t('site_name'),
+            'metaDescription' => $isBn
+                ? '২০০৪ সাল থেকে Heart Care Foundation Comilla-এর হৃদস্বাস্থ্য সচেতনতা, বিনামূল্যে ক্যাম্প, প্রকাশনা এবং আন্তর্জাতিক স্বীকৃতির যাত্রা।'
+                : 'Discover Heart Care Foundation Comilla’s journey since 2004, its free heart camps, community awareness, publications, and international recognition.',
+            'canonicalUrl' => rtrim(APP_URL, '/') . url('our-impact.php'),
+            'ogImage' => rtrim(APP_URL, '/') . asset('public/images/our-impact/2023-award-ceremony.jpg'),
+        ]);
+        break;
+
     case 'news':
     case 'all-news':
         if (!empty($segs[1])) {

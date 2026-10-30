@@ -420,7 +420,7 @@ ON DUPLICATE KEY UPDATE svalue = VALUES(svalue);
 
 -- Seed home cards
 INSERT INTO home_cards (slot,title_en,title_bn,body_en,body_bn,image,link_path) VALUES
-(1,'Heart Health','হৃদরোগ তথ্য','Know the risks, signs and prevention.','ঝুঁকি, লক্ষণ ও প্রতিরোধ জানুন।','assets/images/heart-health.svg','heart-health'),
+(1,'Heart Health','হৃদরোগ তথ্য','Know the risks, signs and prevention.','ঝুঁকি, লক্ষণ ও প্রতিরোধ জানুন।','assets/images/card-heart-health.svg','heart-health'),
 (2,'Our Impact','আমাদের কাজ','Camps, screenings and school programmes.','ক্যাম্প, স্ক্রিনিং ও স্কুল কার্যক্রম।','assets/images/card-impact.svg','events'),
 (3,'Our Community','কমিউনিটি','Doctors, volunteers and members.','চিকিৎসক, স্বেচ্ছাসেবক ও সদস্যবৃন্দ।','assets/images/card-community.svg','team');
 
@@ -532,3 +532,25 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 
 -- Optional PWA switch (0 = off). Toggle it in Admin > Site settings.
 INSERT IGNORE INTO settings (skey, svalue) VALUES ('pwa_enabled', '0');
+
+CREATE TABLE IF NOT EXISTS media_library (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    original_name VARCHAR(255) NOT NULL,
+    path VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(127) NOT NULL,
+    media_kind ENUM('image', 'document', 'archive', 'audio', 'video') NOT NULL,
+    file_size BIGINT UNSIGNED NOT NULL,
+    uploaded_by BIGINT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uniq_media_library_path (path),
+    KEY idx_media_library_kind_created (media_kind, created_at),
+    KEY idx_media_library_name (original_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS media_library_state (
+    state_key VARCHAR(64) NOT NULL,
+    state_value VARCHAR(255) NOT NULL,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (state_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

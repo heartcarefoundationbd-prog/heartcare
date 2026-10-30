@@ -50,7 +50,7 @@ function load_settings(): array
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_post_csrf($self);
-    $cur = load_settings(); $save = []; $errors = [];
+    $cur = load_settings(); $save = []; $errors = []; $oldFiles = [];
     foreach ($groups as $fields) {
         foreach ($fields as $key => $f) {
             [$label, $kind, $max] = $f;
@@ -58,9 +58,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($_FILES[$key]['name'])) {
                     $p = upload_image($key);
                     if ($p === null) { $errors[] = $label . ': ' . (upload_last_error() ?: 'upload failed.'); }
-                    else { $save[$key] = $p; if (!empty($cur[$key])) delete_upload($cur[$key]); }
+                    else {
+                        $save[$key] = $p;
+                        media_library_register_path($p, (string)($_FILES[$key]['name'] ?? ''), media_library_current_admin_id());
+                        if (!empty($cur[$key]) && $cur[$key] !== $p) $oldFiles[$key] = $cur[$key];
+                    }
+                } elseif (!empty($_POST['media_selection'][$key])) {
+                    $selected = media_library_resolve_selection((int)$_POST['media_selection'][$key], [], ['image'], MAX_IMAGE_BYTES);
+                    if (!$selected) { $errors[] = $label . ': selected library image is unavailable or invalid.'; }
+                    else {
+                        $save[$key] = $selected['path'];
+                        if (!empty($cur[$key]) && $cur[$key] !== $selected['path']) $oldFiles[$key] = $cur[$key];
+                    }
                 } elseif (isset($_POST['_remove_' . $key]) && !empty($cur[$key])) {
-                    delete_upload($cur[$key]); $save[$key] = '';
+                    $oldFiles[$key] = $cur[$key]; $save[$key] = '';
                 }
                 continue;
             }
@@ -82,6 +93,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $st = db()->prepare('INSERT INTO settings (skey, svalue) VALUES (?, ?) ON DUPLICATE KEY UPDATE svalue = VALUES(svalue)');
         foreach ($save as $k => $v) $st->execute([$k, $v]);
+        foreach ($oldFiles as $key => $path) {
+            if (($save[$key] ?? $cur[$key] ?? null) !== $path && !media_library_is_path($path)) delete_upload($path);
+        }
         flash('Settings saved.');
     }
     redirect($self);
@@ -106,6 +120,7 @@ admin_header('Site settings', $user, 'settings');
         <?php elseif ($kind === 'image'): ?>
           <?php if ($val): ?><div class="a-preview"><img src="<?= e(asset(img_variant($val, '-480'))) ?>" alt="Current photo" loading="lazy"></div><?php endif; ?>
           <input type="file" id="s-<?= e($key) ?>" name="<?= e($key) ?>" accept="image/jpeg,image/png,image/webp" data-image-input>
+          <?php render_media_picker($key, 'image', ['jpg', 'jpeg', 'png', 'webp']); ?>
           <div class="a-preview" data-new-preview hidden><img alt="New photo preview"></div>
           <?php if ($val): ?><label class="a-inline-check"><input type="checkbox" name="_remove_<?= e($key) ?>" value="1"> Remove photo (use the built-in one)</label><?php endif; ?>
         <?php else: ?>

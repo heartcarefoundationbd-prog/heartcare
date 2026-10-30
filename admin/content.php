@@ -112,7 +112,18 @@ function collect_post(array $cfg, ?array $existing): array
             if (!empty($_FILES[$name]['name'])) {
                 $new = upload_image($name);
                 if ($new === null) { $errors[] = $f['label'] . ': ' . (upload_last_error() ?: 'upload failed.'); }
-                else { $data[$name] = $new; if ($old) $trash[] = $old; }
+                else {
+                    $data[$name] = $new;
+                    media_library_register_path($new, (string)($_FILES[$name]['name'] ?? ''), media_library_current_admin_id());
+                    if ($old) $trash[] = $old;
+                }
+            } elseif (!empty($_POST['media_selection'][$name])) {
+                $selected = media_library_resolve_selection((int)$_POST['media_selection'][$name], [], ['image'], MAX_IMAGE_BYTES);
+                if (!$selected) { $errors[] = $f['label'] . ': selected library image is unavailable or invalid.'; }
+                else {
+                    $data[$name] = $selected['path'];
+                    if ($old && $old !== $selected['path']) $trash[] = $old;
+                }
             } elseif (isset($_POST['_remove_' . $name]) && $req !== true) {
                 $data[$name] = null; if ($old) $trash[] = $old;
             } elseif ($req === true && empty($old)) {
@@ -121,15 +132,41 @@ function collect_post(array $cfg, ?array $existing): array
         } elseif ($type === 'file') {
             $cols = $f['cols'];
             $old = $existing[$cols['path']] ?? null;
+            $maxBytes = (int)($f['max_bytes'] ?? MAX_DOC_BYTES);
             if (!empty($_FILES[$name]['name'])) {
-                $up = upload_document($name, $f['extensions'] ?? []);
-                if ($up === null) { $errors[] = $f['label'] . ': ' . (upload_last_error() ?: 'upload failed.'); }
+                $allowedExtensions = $f['extensions'] ?? array_keys(document_types());
+                $extension = strtolower(pathinfo((string)$_FILES[$name]['name'], PATHINFO_EXTENSION));
+                $tmp = (string)($_FILES[$name]['tmp_name'] ?? '');
+                $actualSize = $tmp !== '' && is_file($tmp) ? filesize($tmp) : false;
+                $up = (int)($_FILES[$name]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+                    ? media_library_upload($_FILES[$name], media_library_current_admin_id())
+                    : (!in_array($extension, $allowedExtensions, true)
+                    ? ['ok' => false, 'error' => 'This file type is not allowed for this field.']
+                    : (($actualSize === false)
+                        ? ['ok' => false, 'error' => 'The uploaded file could not be verified.']
+                        : (($actualSize > $maxBytes)
+                            ? ['ok' => false, 'error' => 'The file exceeds this field’s ' . human_size($maxBytes) . ' limit.']
+                            : media_library_upload($_FILES[$name], media_library_current_admin_id()))));
+                if (!$up['ok']) { $errors[] = $f['label'] . ': ' . ($up['error'] ?? 'upload failed.'); }
                 else {
-                    $data[$cols['path']] = $up[0];
-                    $data[$cols['name']] = $up[1];
-                    if (isset($cols['size'])) $data[$cols['size']] = $up[2];
-                    if (isset($cols['ext']))  $data[$cols['ext']]  = $up[3];
+                    $item = $up['item'];
+                    $data[$cols['path']] = $item['path'];
+                    $data[$cols['name']] = $item['name'];
+                    if (isset($cols['size'])) $data[$cols['size']] = $item['size'];
+                    if (isset($cols['ext']))  $data[$cols['ext']]  = $item['extension'];
                     if ($old) $trash[] = $old;
+                }
+            } elseif (!empty($_POST['media_selection'][$name])) {
+                $allowedExtensions = $f['extensions'] ?? array_keys(document_types());
+                $selected = media_library_resolve_selection((int)$_POST['media_selection'][$name], $allowedExtensions);
+                if (!$selected) { $errors[] = $f['label'] . ': selected library file is unavailable or invalid.'; }
+                elseif ($selected['size'] > $maxBytes) { $errors[] = $f['label'] . ': selected file exceeds this field’s ' . human_size($maxBytes) . ' limit.'; }
+                else {
+                    $data[$cols['path']] = $selected['path'];
+                    $data[$cols['name']] = $selected['name'];
+                    if (isset($cols['size'])) $data[$cols['size']] = $selected['size'];
+                    if (isset($cols['ext']))  $data[$cols['ext']]  = $selected['extension'];
+                    if ($old && $old !== $selected['path']) $trash[] = $old;
                 }
             } elseif (isset($_POST['_remove_' . $name]) && $req !== true) {
                 $data[$cols['path']] = null; $data[$cols['name']] = null;
@@ -144,7 +181,7 @@ function collect_post(array $cfg, ?array $existing): array
 
 function remove_stored_file(?string $path): void
 {
-    if (!$path) return;
+    if (!$path || media_library_is_path($path)) return;
     if (str_starts_with($path, 'assets/uploads/docs/')) {
         if (!str_contains($path, '..')) @unlink(APP_ROOT . '/' . $path);
     } else {
@@ -182,8 +219,9 @@ function render_field(array $f, ?array $row, int $uid): void
             }
         }
         echo '<div class="a-field"><label for="f-news-images">Add article images</label>'
-           . '<input type="file" id="f-news-images" name="news_images[]" accept="image/jpeg,image/png,image/webp" multiple>'
-           . '<div class="a-multi-preview" data-multi-preview></div>'
+           . '<input type="file" id="f-news-images" name="news_images[]" accept="image/jpeg,image/png,image/webp" multiple>';
+        render_media_picker('news_images', 'image', ['jpg', 'jpeg', 'png', 'webp'], true);
+        echo '<div class="a-multi-preview" data-multi-preview></div>'
            . '<p class="a-help">JPG, PNG or WebP. Each image is checked and limited to ' . e(human_size(MAX_IMAGE_BYTES)) . '.</p></div>';
         echo '</fieldset>';
         return;
@@ -273,6 +311,7 @@ function render_field(array $f, ?array $row, int $uid): void
             }
             echo '<input type="file" id="' . e($id) . '" name="' . e($name) . '" accept="image/jpeg,image/png,image/webp" data-image-input>';
             echo '<div class="a-preview" data-new-preview hidden><img alt="New image preview"></div>';
+            render_media_picker($name, 'image', ['jpg', 'jpeg', 'png', 'webp']);
             echo '<p class="a-help">JPG, PNG or WebP. Large phone photos are resized automatically.</p>';
             if ($cur && ($f['req'] ?? false) !== true) {
                 echo '<label class="a-inline-check"><input type="checkbox" name="_remove_' . e($name) . '" value="1"> Remove current image</label>';
@@ -284,8 +323,9 @@ function render_field(array $f, ?array $row, int $uid): void
                 echo '<p class="a-current-file">Current: <a href="' . e(asset($cur)) . '" target="_blank" rel="noopener">'
                    . e((string)($row[$f['cols']['name']] ?? basename($cur))) . '</a></p>';
             }
-            $extensions = $f['extensions'] ?? ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
-            echo '<input type="file" id="' . e($id) . '" name="' . e($name) . '" accept="' . e(implode(',', array_map(static fn(string $ext): string => '.' . $ext, $extensions))) . '"' . (($f['req'] ?? false) === true && !$cur ? ' required' : '') . '>';
+            $extensions = $f['extensions'] ?? array_keys(document_types());
+            echo '<input type="file" id="' . e($id) . '" name="' . e($name) . '" accept="' . e(implode(',', array_map(static fn(string $ext): string => '.' . $ext, $extensions))) . '">';
+            render_media_picker($name, 'document', $extensions);
             if ($cur && ($f['req'] ?? false) !== true) {
                 echo '<label class="a-inline-check"><input type="checkbox" name="_remove_' . e($name) . '" value="1"> Remove current file</label>';
             }
@@ -428,8 +468,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['news_images']['name'])) {
             $uploadResult = upload_multiple_images('news_images');
             $newsImagePaths = $uploadResult['paths'];
+            foreach ($newsImagePaths as $path) {
+                media_library_register_path($path, basename($path), media_library_current_admin_id());
+            }
             $errors = array_merge($errors, $uploadResult['errors']);
         }
+        foreach ((array)($_POST['media_selection']['news_images'] ?? []) as $mediaId) {
+            if (!is_scalar($mediaId) || !ctype_digit((string)$mediaId)) {
+                $errors[] = 'One or more selected article images are invalid.';
+                continue;
+            }
+            $selected = media_library_resolve_selection((int)$mediaId, [], ['image'], MAX_IMAGE_BYTES);
+            if (!$selected) $errors[] = 'One or more selected article images are unavailable.';
+            else $newsImagePaths[] = $selected['path'];
+        }
+        $newsImagePaths = array_values(array_unique($newsImagePaths));
     }
 
     if (!empty($cfg['slug'])) {

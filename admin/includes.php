@@ -108,6 +108,9 @@ function admin_nav(array $user): array
     $site = [['profile.php', 'My account', 'profile']];
     if (can($user, 'settings')) array_unshift($site, ['settings.php', 'Site settings', 'settings']);
     if (can($user, 'users'))    array_unshift($site, ['users.php', 'Users', 'users']);
+    if (can($user, 'content')) {
+        $nav['Content'][] = ['media.php', 'Media Library', 'media'];
+    }
     $nav['Site'] = $site;
     return $nav;
 }
@@ -126,6 +129,7 @@ function admin_header(string $title, array $user, string $active = ''): void
 <meta name="theme-color" content="#1B1B1F">
 <title><?= e($title) ?> · HeartCare Admin</title>
 <link rel="stylesheet" href="<?= e(asset('assets/css/admin.css')) ?>?v=<?= e($cssV) ?>">
+<script src="<?= e(asset('assets/js/admin-media-picker.js')) ?>?v=<?= e((string)@filemtime(APP_ROOT . '/assets/js/admin-media-picker.js')) ?>" defer></script>
 <script src="<?= e(asset('assets/js/admin.js')) ?>?v=<?= e($jsV) ?>" defer></script>
 </head>
 <body>

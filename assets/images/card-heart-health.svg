@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D7263D" />
+      <stop offset="100%" stop-color="#6F0E1C" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#grad)" />
+  <circle cx="400" cy="240" r="260" fill="url(#glow)" />
+  <path d="M 0 420 L 260 420 L 300 420 L 320 370 L 350 480 L 380 340 L 410 450 L 430 400 L 450 420 L 800 420"
+        fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M 400 304 C 385 291 326 248 326 207 C 326 168 375 154 400 190 C 425 154 474 168 474 207 C 474 248 415 291 400 304 Z"
+        fill="#ffffff" opacity="0.94" />
+  <path d="M 348 220 H 376 L 389 198 L 407 244 L 423 214 L 434 220 H 452"
+        fill="none" stroke="#8C1525" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="400" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">HEART HEALTH</text>
+  <text x="400" y="385" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="rgba(255,255,255,0.85)" text-anchor="middle">Know the risks, signs &amp; prevention</text>
+</svg>

@@ -73,7 +73,7 @@ return [
     'stat_deaths_label'       => 'বিশ্বে প্রতি বছর হৃদরোগে মৃত্যু',
     'stat_share_val'          => '৩৩%',
     'stat_share_label'        => 'মোট মৃত্যুর এক-তৃতীয়াংশ হৃদরোগজনিত',
-    'stat_screened_val'       => '৪০০+',
+    'stat_screened_val'       => '৪ লক্ষ+',
     'stat_screened_label'     => 'কুমিল্লায় আমাদের ক্যাম্পে স্ক্রিনিংপ্রাপ্ত মানুষ',
     'leadership_eyebrow'      => 'নেতৃত্বের বার্তা',
     'leadership_photo_alt'    => 'প্রফেসর ডা. ত্রিপ্তিশ চন্দ্র ঘোষ, প্রতিষ্ঠাতা ও সভাপতি',

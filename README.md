@@ -13,7 +13,7 @@ a photo gallery, a mobile-friendly admin panel, security hardening and an option
 
 ## 2. Fresh install (XAMPP or hosting)
 1. Copy the folder to `htdocs/heartcare` (or your web root).
-2. Create an empty database `heartcare` (utf8mb4). Select it and import **`sql/install.sql`**, then apply `sql/migrations/008_gallery_media.sql` to add the curated video entries.
+2. Create an empty database `heartcare` (utf8mb4). Select it and import **`sql/install.sql`**, then apply `sql/migrations/008_gallery_media.sql` to add the curated video entries. The installer includes the shared media-library tables.
 3. Local settings: copy `config/config.local.php.example` to `config/config.local.php` and set DB host/port/name/user/password. Set `APP_URL` to the public origin (for example `https://www.example.org`); `BASE_PATH` is added to canonical and social URLs automatically.
    If you do nothing, defaults match the original XAMPP setup (`127.0.0.1:3307`, user `root`, empty password, URL prefix `/heartcare`).
    Installing at a domain root? set `BASE_PATH` to `''`.
@@ -22,13 +22,15 @@ a photo gallery, a mobile-friendly admin panel, security hardening and an option
 
 ## 3. Upgrading an existing database
 Do **not** import `install.sql`. Back up your database, then import migrations in order:
-`001_add_content_modules.sql`, followed by `003_dynamic_news.sql`, `004_wordpress_import.sql`, `005_add_event_news_url.sql`, `006_smart_home_cards.sql`, `007_publications.sql`, and `008_gallery_media.sql`. If needed, apply optional index migration 002 before 007.
+`001_add_content_modules.sql`, followed by `003_dynamic_news.sql`, `004_wordpress_import.sql`, `005_add_event_news_url.sql`, `006_smart_home_cards.sql`, `007_publications.sql`, `008_gallery_media.sql`, `009_heart_health_card_visual.sql`, and `010_media_library.sql`. If needed, apply optional index migration 002 before 007.
 Migration 003 adds optional SEO fields, an authored-language marker, normalized article tags, image records, and slug redirects; it drops no existing content.
 Migration 004 adds nullable WordPress source IDs to news and events so the CSV importer can safely update records on repeat runs.
 Migration 005 adds a nullable `related_news_url` to events and is safe to re-run; existing events remain unchanged and continue linking to their event detail pages. On an existing installation, back up the database and apply this migration before deploying the updated Admin form.
 Migration 006 extends the existing home-card records and adds normalized category, statistics, CTA, media, style, and animation tables. It preserves current card IDs, text, image paths, links, and publication status. Apply it before deploying the homepage card manager.
 Migration 007 renames `health_topics` to `publications` without changing the existing IDs or content, then adds optional subtitle, PDF, and external publication URL fields. Apply it before deploying the Publications menu and Admin form. Existing `/heart-health` URLs redirect to their Publications equivalents.
 Migration 008 extends the existing Gallery items with photo albums, categories, and YouTube video IDs, then seeds the supplied video list idempotently. It preserves current photo records and uploaded files. One repeated entry is merged: the provided final URL reused the hypertension video ID, so the matching World Heart Day video uses the verified ID `dSTF2YgGTRE` already supplied for that title. Apply this migration after backing up the database and before deploying the gallery Admin form.
+Migration 009 switches the Heart Health homepage card to a matching branded SVG image visual while preserving its text, link, and other card settings.
+Migration 010 adds the shared Media Library index. Uploads use a safe allowlist of common images, documents, archives, audio and video; active web files and executables are rejected. The library limit is 25 MB per file, while existing document and publication fields retain their 10 MB limit.
 Rollback safely by restoring the prior source version; the additive columns/tables may remain unused. Do not drop them unless you have confirmed there is no new content to preserve.
 
 ## 4. Go-live checklist
@@ -45,6 +47,7 @@ Gallery · Publications (thumbnail, PDF and international URL) · Pages · Home/
 Donations (mark pending/paid/failed) · Newsletter (CSV export) · Site settings (contact details, homepage video,
 leadership message, PWA switch) · Users and roles · My account.
 
+The **Media Library** indexes existing uploads and lets content managers upload reusable files once. Existing image, attachment and video fields can select compatible library assets while keeping their current storage references and per-field limits.
 The **Photos & Videos** manager supports photo albums and YouTube cards. A YouTube player is loaded only after a visitor chooses Play; image uploads continue to use the normal validated upload workflow.
 
 The **Homepage card manager** controls the homepage Mission, Programs & Impact cards, including bilingual copy,

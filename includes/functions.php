@@ -524,3 +524,4 @@ function render_view(string $view, array $data = []): void
 require_once __DIR__ . '/media.php';
 require_once __DIR__ . '/modules.php';
 require_once __DIR__ . '/forms.php';
+require_once __DIR__ . '/media-library.php';
