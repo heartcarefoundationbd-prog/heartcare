@@ -1,0 +1,4 @@
+/config/config.local.php
+/news-events-content.csv
+/storage/logs/*
+!/storage/logs/.gitkeep

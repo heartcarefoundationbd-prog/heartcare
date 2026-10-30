@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D7263D" />
+      <stop offset="100%" stop-color="#6F0E1C" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#grad)" />
+  <circle cx="400" cy="240" r="260" fill="url(#glow)" />
+  
+  <!-- Decorative heart rhythm line -->
+  <path d="M 0 420 L 260 420 L 300 420 L 320 370 L 350 480 L 380 340 L 410 450 L 430 400 L 450 420 L 800 420" 
+        fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Central Icon Symbol -->
+  <text x="400" y="270" font-family="system-ui, -apple-system, sans-serif" font-size="96" fill="#ffffff" text-anchor="middle" opacity="0.92">🚨</text>
+  
+  <!-- Text Badges -->
+  <text x="400" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">HEART ATTACK</text>
+  <text x="400" y="375" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="rgba(255,255,255,0.85)" text-anchor="middle">Warning signs & emergency response</text>
+</svg>

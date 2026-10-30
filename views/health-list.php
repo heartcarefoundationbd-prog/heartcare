@@ -1,0 +1,1 @@
+<?php $publications = $topics ?? []; require APP_ROOT . '/views/publications-list.php'; ?>

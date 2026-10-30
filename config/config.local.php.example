@@ -1,0 +1,11 @@
+<?php
+/* Copy to config/config.local.php and edit. This file is for ONE machine; do not share it. */
+
+// define('BASE_PATH', '');                       // installed at the domain root
+// define('APP_URL',   'https://www.example.org');
+// define('DB_HOST', 'localhost');
+// define('DB_PORT', 3306);
+// define('DB_NAME', 'your_database');
+// define('DB_USER', 'your_user');
+// define('DB_PASS', 'your_password');
+// define('DEBUG', false);                        // always false on a live site
