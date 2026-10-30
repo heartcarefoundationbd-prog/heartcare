@@ -12,7 +12,7 @@
       <a class="pill" href="<?= e(url('donate')) ?>">
         <?= e(t('donate')) ?><span class="pill-arrow">›</span>
       </a>
-      <a class="pill pill-outline" href="<?= e(url('publications')) ?>">
+      <a class="pill pill-outline" href="<?= e(url('heart-health')) ?>">
         <?= e(t('learn_more')) ?><span class="pill-arrow">›</span>
       </a>
     </div>
@@ -47,10 +47,12 @@
 <?php require APP_ROOT . '/views/partials/video.php'; ?>
 
 <!-- 8b. Photo and video gallery directly follows the community video. -->
-<?php require APP_ROOT . '/views/partials/gallery-cta.php'; ?>
+<div class="home-resource-panels">
+  <?php require APP_ROOT . '/views/partials/gallery-cta.php'; ?>
 
-<!-- 9. Observatory / Knowledge Base Strip -->
-<?php require APP_ROOT . '/views/partials/observatory.php'; ?>
+  <!-- 9. Observatory / Knowledge Base Strip -->
+  <?php require APP_ROOT . '/views/partials/observatory.php'; ?>
+</div>
 
 <!-- 10. Topics Image Grid -->
 <?php require APP_ROOT . '/views/partials/topics-grid.php'; ?>

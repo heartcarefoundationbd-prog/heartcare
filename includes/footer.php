@@ -61,6 +61,7 @@ $partners = [
       <ul>
         <li><a href="<?= e(url('team')) ?>"><?= e(lang()==='bn'?'আমাদের কমিউনিটি':'Our Community') ?></a></li>
         <li><a href="<?= e(url('mission')) ?>"><?= e(t('nav_mission')) ?></a></li>
+        <li><a href="<?= e(url('our-impact.php')) ?>"><?= e(t('nav_impact')) ?></a></li>
         <li><a href="<?= e(url('about')) ?>"><?= e(lang()==='bn'?'নেতৃত্ব':'Our Leadership') ?></a></li>
       </ul>
     </details>

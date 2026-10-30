@@ -7,7 +7,8 @@ $newsTweakVersion = filemtime(APP_ROOT . '/assets/css/news-tweak.css');
 $pwaOn = setting('pwa_enabled') === '1';
 $nav = [
     ['label' => t('nav_mission'),   'url' => url('mission')],
-    ['label' => t('nav_impact'),    'url' => url('events')],
+    ['label' => t('nav_impact'),    'url' => url('our-impact.php')],
+    ['label' => t('upcoming_events'), 'url' => url('events')],
     ['label' => t('nav_community'), 'url' => url('team')],
     ['label' => t('nav_health'),    'url' => url('publications.php')],
     ['label' => t('nav_news'),      'url' => url('news')],
@@ -64,12 +65,17 @@ $navMore = [
 <a class="skip" href="#main"><?= e(t('skip_to_content')) ?></a>
 
 <?php $socialLinks = social_links(); ?>
-<?php if ($socialLinks): ?>
 <div class="social-topbar">
   <div class="wrap social-topbar-inner">
-    <nav class="social-links" aria-label="<?= e(lang() === 'bn' ? 'সামাজিক যোগাযোগমাধ্যম' : 'Social media') ?>">
-      <?php foreach ($socialLinks as $social): ?>
-        <a class="social-icon-link" href="<?= e($social['url']) ?>" target="_blank" rel="noopener noreferrer" aria-label="<?= e($social['label']) ?>" title="<?= e($social['label']) ?>">
+    <p class="topbar-message">We care about your HEART, We care about your LIFE</p>
+    <a class="topbar-contact" href="tel:+8802334400830">
+      <span class="topbar-contact-label">Call for Help</span>
+      <span class="topbar-contact-number">+8802334400830</span>
+    </a>
+    <?php if ($socialLinks): ?>
+      <nav class="social-links" aria-label="<?= e(lang() === 'bn' ? 'সামাজিক যোগাযোগমাধ্যম' : 'Social media') ?>">
+        <?php foreach ($socialLinks as $social): ?>
+          <a class="social-icon-link" href="<?= e($social['url']) ?>" target="_blank" rel="noopener noreferrer" aria-label="<?= e($social['label']) ?>" title="<?= e($social['label']) ?>">
           <?php if ($social['key'] === 'facebook'): ?>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.6-1.5h1.7V3.9c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3V10H7.3v3h2.8v8h3.4Z"/></svg>
           <?php elseif ($social['key'] === 'instagram'): ?>
@@ -83,13 +89,13 @@ $navMore = [
           <?php else: ?>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 0 0-9.8 9.9c0 5.4 4.4 9.7 9.8 9.7s9.8-4.3 9.8-9.7A9.8 9.8 0 0 0 12 2.2Zm0 3.1c2.4 0 4.4 1.9 4.4 4.3h-2.7c0-.9-.7-1.6-1.7-1.6s-1.7.7-1.7 1.6.7 1.5 1.7 1.5c2.5 0 4.4 1.9 4.4 4.3S14.4 19.8 12 19.8s-4.4-1.9-4.4-4.4h2.7c0 1 .7 1.7 1.7 1.7s1.7-.7 1.7-1.7c0-.9-.7-1.6-1.7-1.6-2.5 0-4.4-1.9-4.4-4.2s1.9-4.3 4.4-4.3Z"/></svg>
           <?php endif; ?>
-          <span class="sr-only"><?= e($social['label']) ?></span>
-        </a>
-      <?php endforeach; ?>
-    </nav>
+            <span class="sr-only"><?= e($social['label']) ?></span>
+          </a>
+        <?php endforeach; ?>
+      </nav>
+    <?php endif; ?>
   </div>
 </div>
-<?php endif; ?>
 
 <header class="site-header">
   <div class="wrap header-inner">

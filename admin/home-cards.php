@@ -43,16 +43,19 @@ function home_card_store_video(string $field): ?string
         throw new RuntimeException('The video upload did not complete. Please try again.');
     }
     $tmp = $file['tmp_name'] ?? '';
-    $size = (int)($file['size'] ?? 0);
-    if (!is_string($tmp) || !is_uploaded_file($tmp) || $size < 1 || $size > HOME_CARD_VIDEO_LIMIT) {
+    if (!is_string($tmp) || !is_uploaded_file($tmp)) {
         throw new RuntimeException('Choose a video smaller than 24 MB.');
     }
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime = $finfo->file($tmp);
-    $extensions = ['video/mp4' => 'mp4', 'video/webm' => 'webm'];
-    if (!isset($extensions[$mime])) {
+    $size = filesize($tmp);
+    if ($size === false || $size < 1 || $size > HOME_CARD_VIDEO_LIMIT) {
+        throw new RuntimeException('Choose a video smaller than 24 MB.');
+    }
+    $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));
+    if (!in_array($extension, ['mp4', 'webm'], true)) {
         throw new RuntimeException('Only MP4 and WebM videos are accepted.');
     }
+    $validation = media_library_validate_file($tmp, $extension);
+    if (!$validation['ok']) throw new RuntimeException((string)$validation['error']);
     $directory = UPLOAD_PATH . '/videos';
     if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
         throw new RuntimeException('The video folder could not be created.');
@@ -60,7 +63,7 @@ function home_card_store_video(string $field): ?string
     if (!is_writable($directory)) {
         throw new RuntimeException('The web server cannot write to the video uploads folder.');
     }
-    $filename = bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
+    $filename = bin2hex(random_bytes(12)) . '.' . $extension;
     if (!move_uploaded_file($tmp, $directory . '/' . $filename)) {
         throw new RuntimeException('The video could not be saved. Check server permissions and free disk space.');
     }
@@ -78,6 +81,7 @@ function home_card_cleanup_unused_media(array $paths): void
 {
     $paths = array_values(array_unique(array_filter($paths, static fn($path) => is_string($path) && $path !== '')));
     foreach ($paths as $path) {
+        if (media_library_is_path($path)) continue;
         if (str_starts_with($path, 'assets/uploads/videos/')) {
             $rows = home_card_read_all('SELECT COUNT(*) AS uses FROM home_card_media WHERE video_path = ?', [$path]);
             if ($rows !== null && (int)($rows[0]['uses'] ?? 0) === 0) home_card_remove_video($path);
@@ -371,7 +375,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['image']['name'])) {
             $newImage = upload_image('image');
             if ($newImage === null) $formErrors[] = 'Card image: ' . (upload_last_error() ?: 'upload failed.');
-            else { $imagePath = $newImage; $uploadedPaths[] = $newImage; }
+            else {
+                $imagePath = $newImage;
+                $uploadedPaths[] = $newImage;
+                media_library_register_path($newImage, (string)($_FILES['image']['name'] ?? ''), media_library_current_admin_id());
+            }
+        } elseif (!empty($_POST['media_selection']['image'])) {
+            $selected = media_library_resolve_selection((int)$_POST['media_selection']['image'], [], ['image'], MAX_IMAGE_BYTES);
+            if (!$selected) $formErrors[] = 'Card image: selected library image is unavailable or invalid.';
+            else $imagePath = $selected['path'];
         } elseif (isset($_POST['remove_image'])) {
             $imagePath = '';
         }
@@ -379,10 +391,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['video']['name'])) {
             try {
                 $newVideo = home_card_store_video('video');
-                if ($newVideo) { $videoPath = $newVideo; $uploadedPaths[] = $newVideo; }
+                if ($newVideo) {
+                    $videoPath = $newVideo;
+                    $uploadedPaths[] = $newVideo;
+                    media_library_register_path($newVideo, (string)($_FILES['video']['name'] ?? ''), media_library_current_admin_id());
+                }
             } catch (Throwable $e) {
                 $formErrors[] = $e->getMessage();
             }
+        } elseif (!empty($_POST['media_selection']['video'])) {
+            $selected = media_library_resolve_selection((int)$_POST['media_selection']['video'], ['mp4', 'webm'], ['video'], HOME_CARD_VIDEO_LIMIT);
+            if (!$selected) $formErrors[] = 'Background video: selected library video is unavailable or invalid.';
+            else $videoPath = $selected['path'];
         } elseif (isset($_POST['remove_video'])) {
             $videoPath = '';
         }
@@ -533,9 +553,9 @@ if ($action === 'new' || $action === 'edit') {
           <?php foreach (HOME_CARD_ICONS as $icon): ?><option value="<?= e($icon) ?>"<?= home_card_form_value($formValues,'icon_key') === $icon ? ' selected' : '' ?>><?= e(ucfirst($icon)) ?></option><?php endforeach; ?>
         </select></div>
         <?php if (!empty($formValues['image'])): ?><div class="a-field"><label>Current image</label><img class="a-thumb" src="<?= e(asset(img_variant((string)$formValues['image'],'-480'))) ?>" alt=""><label class="a-inline-check"><input type="checkbox" name="remove_image" value="1"> Remove image</label></div><?php endif; ?>
-        <div class="a-field"><label for="image">Card image / video poster</label><input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp"><p class="a-help">JPG, PNG or WebP. This also supplies a poster when using video.</p></div>
+        <div class="a-field"><label for="image">Card image / video poster</label><input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp"><?php render_media_picker('image', 'image', ['jpg', 'jpeg', 'png', 'webp']); ?><p class="a-help">JPG, PNG or WebP. This also supplies a poster when using video.</p></div>
         <?php if (!empty($formValues['video_path'])): ?><div class="a-field"><label>Current background video</label><video controls preload="metadata" style="max-width:320px"><source src="<?= e(asset((string)$formValues['video_path'])) ?>"></video><label class="a-inline-check"><input type="checkbox" name="remove_video" value="1"> Remove video</label></div><?php endif; ?>
-        <div class="a-field"><label for="video">Video background (MP4 or WebM, max 24 MB)</label><input type="file" id="video" name="video" accept="video/mp4,video/webm"></div>
+        <div class="a-field"><label for="video">Video background (MP4 or WebM, max 24 MB)</label><input type="file" id="video" name="video" accept="video/mp4,video/webm"><?php render_media_picker('video', 'video', ['mp4', 'webm']); ?></div>
       </fieldset>
 
       <fieldset class="a-group-box"><legend>Appearance</legend>
